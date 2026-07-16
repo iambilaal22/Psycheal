@@ -1,0 +1,10 @@
+{
+  "name": "PsycHeal",
+  "description": "A modern AI-powered mental wellness platform offering an empathetic companion, voice conversations, an interactive AI journal, personalized wellness plans, mood trackers, and crisis support.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

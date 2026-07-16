@@ -1,0 +1,166 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default: Dark Mode */
+  --brand-primary: #5bb374;
+  --brand-primary-hover: #41945a;
+  --brand-secondary: #ffffff;
+  --brand-bg: #0d1112; /* Deep slate-charcoal forest background */
+  --brand-panel: #161b1d; /* Elegant deep card panel */
+  --brand-border: #222a2e; /* Subtle slate border */
+  --brand-text: #e2e8f0; /* Soft gray text */
+  --brand-text-muted: #94a3b8; /* Muted slate text */
+  --brand-crisis-primary: #f87171;
+  --brand-crisis-secondary: #2c1616;
+}
+
+:root.light {
+  /* Light Mode Overrides */
+  --brand-secondary: #111111;
+  --brand-bg: #FAF9F6;
+  --brand-panel: #ffffff;
+  --brand-border: #eae6df;
+  --brand-text: #1c1917;
+  --brand-text-muted: #78716c;
+  --brand-crisis-primary: #dc2626;
+  --brand-crisis-secondary: #fee2e2;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-brand-text font-sans selection:bg-indigo-100 selection:text-indigo-900 antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* Automatic utility overrides for Dark Mode (when not .light) */
+:root:not(.light) {
+  color-scheme: dark;
+}
+
+:root:not(.light) body {
+  background-color: var(--brand-bg);
+  color: var(--brand-text);
+}
+
+:root:not(.light) .bg-white {
+  background-color: var(--brand-panel) !important;
+}
+
+:root:not(.light) .bg-slate-50 {
+  background-color: var(--brand-bg) !important;
+}
+
+:root:not(.light) .bg-slate-100 {
+  background-color: #1e2428 !important;
+}
+
+:root:not(.light) .bg-slate-50\/50 {
+  background-color: rgba(22, 27, 29, 0.55) !important;
+}
+
+:root:not(.light) .border-brand-border {
+  border-color: var(--brand-border) !important;
+}
+
+:root:not(.light) .border-slate-200,
+:root:not(.light) .border-slate-300 {
+  border-color: var(--brand-border) !important;
+}
+
+:root:not(.light) .text-brand-secondary,
+:root:not(.light) .text-brand-text {
+  color: var(--brand-text) !important;
+}
+
+:root:not(.light) .text-brand-text-muted {
+  color: var(--brand-text-muted) !important;
+}
+
+:root:not(.light) input,
+:root:not(.light) textarea,
+:root:not(.light) select {
+  background-color: var(--brand-bg) !important;
+  color: var(--brand-text) !important;
+  border-color: var(--brand-border) !important;
+}
+
+:root:not(.light) .hover\:bg-slate-50:hover {
+  background-color: #20272c !important;
+}
+
+:root:not(.light) .hover\:bg-slate-100:hover {
+  background-color: #262f35 !important;
+}
+
+/* Adaptive Chat Background and Theme-Aware Bubbles */
+.bg-silver-chat {
+  background: var(--brand-bg) !important;
+}
+
+.chat-bubble-user {
+  background-color: #18181b;
+  color: #ffffff;
+  border: 1px solid #27272a;
+}
+
+.light .chat-bubble-user {
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  border: 1px solid var(--brand-primary-hover);
+}
+
+.chat-bubble-assistant {
+  background-color: #27272a;
+  color: #ffffff;
+  border: 1px solid #3f3f46;
+}
+
+.light .chat-bubble-assistant {
+  background-color: #ffffff;
+  color: var(--brand-text);
+  border: 1px solid var(--brand-border);
+}
+
+.chat-avatar-user {
+  background-color: #18181b;
+  color: #ffffff;
+  border: 1px solid #27272a;
+}
+
+.light .chat-avatar-user {
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  border: 1px solid var(--brand-primary-hover);
+}
+
+.chat-avatar-assistant {
+  background-color: #27272a;
+  color: #34d399; /* emerald-400 */
+  border: 1px solid #3f3f46;
+}
+
+.light .chat-avatar-assistant {
+  background-color: #ffffff;
+  color: #10b981; /* emerald-500 */
+  border: 1px solid var(--brand-border);
+}
+
+.chat-loader-bubble {
+  background-color: #27272a;
+  border: 1px solid #3f3f46;
+  color: #e2e8f0;
+}
+
+.light .chat-loader-bubble {
+  background-color: #ffffff;
+  border: 1px solid var(--brand-border);
+  color: var(--brand-text);
+}
+
+
+
