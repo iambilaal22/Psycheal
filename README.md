@@ -10,6 +10,14 @@ The visual experience of PsycHeal is crafted to act as a digital sanctuary, util
 * **Palette:** `#0d1112` (Background), `#161b1d` (Cards), `#222a2e` (Borders).
 * **Vibe:** Evokes the peaceful atmosphere of a deep woodland, minimizing eye strain for evening usage.
 
+* Screenshots
+* <img width="1918" height="945" alt="Screenshot 2026-07-16 125524" src="https://github.com/user-attachments/assets/b4c0c2fd-6017-486c-8bbf-d1942d39d4b1" />
+<img width="1917" height="946" alt="Screenshot 2026-07-16 125455" src="https://github.com/user-attachments/assets/c973540f-607e-448b-bcd2-62fe7df6841f" />
+<img width="1919" height="948" alt="Screenshot 2026-07-16 125446" src="https://github.com/user-attachments/assets/eef30d62-484b-4e13-b5d4-1735ed6fb191" />
+<img width="1914" height="949" alt="Screenshot 2026-07-16 125511" src="https://github.com/user-attachments/assets/3ef4cbf6-9200-48fa-aaa1-3e9a67fce8e2" />
+
+
+
 
 * **Light Mode: Ivory-Warm Sand**
 * **Palette:** `#FAF9F6` (Background), `#eae6df` (Dividers).
