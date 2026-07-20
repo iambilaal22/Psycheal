@@ -17,6 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import { UserProfile } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface VoiceCallProps {
   userProfile: UserProfile;
@@ -36,123 +37,190 @@ export interface GeminiVoiceProfile {
   rateAdjust: number;
   description: string;
   keywords: string[];
+  avatarUrl: string;
 }
 
 export const GEMINI_VOICES: GeminiVoiceProfile[] = [
   {
-    id: 'signature',
-    name: 'Psycheal Signature',
+    id: 'elena',
+    name: 'Elena',
     gender: 'female',
-    tone: 'Studio-grade, high-fidelity warmth',
+    tone: 'Psycheal Signature (Warm, Primary)',
     pitchAdjust: 1.0,
     rateAdjust: 0.0,
-    description: 'Our primary, ultra-realistic voice optimized for warm emotional counseling and continuous verbal pacing.',
-    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen']
+    description: 'Sounds sophisticated, warm, and very trustworthy.',
+    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen', 'elena'],
+    avatarUrl: '/src/assets/images/ai_avatar_female_warm_1784217163737.jpg'
   },
   {
-    id: 'nova',
-    name: 'Psycheal Calm',
+    id: 'sarah',
+    name: 'Sarah',
     gender: 'female',
-    tone: 'Calm, supportive, mid-range',
+    tone: 'Psycheal Signature (Warm, Primary)',
+    pitchAdjust: 1.0,
+    rateAdjust: 0.0,
+    description: 'Classic, approachable, and steady.',
+    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen', 'sara', 'sarah'],
+    avatarUrl: '/src/assets/images/sarah_avatar_1784217405756.jpg'
+  },
+  {
+    id: 'julia',
+    name: 'Julia',
+    gender: 'female',
+    tone: 'Psycheal Signature (Warm, Primary)',
+    pitchAdjust: 1.02,
+    rateAdjust: -0.02,
+    description: 'Feels nurturing and professional.',
+    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen', 'julia'],
+    avatarUrl: '/src/assets/images/julia_avatar_1784217420893.jpg'
+  },
+  {
+    id: 'maya',
+    name: 'Maya',
+    gender: 'female',
+    tone: 'Psycheal Calm (Soothing, Mid-range)',
     pitchAdjust: 0.98,
     rateAdjust: -0.05,
-    description: 'A mellow, soothing female voice optimized for anxiety relief and calm somatic guidance.',
-    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen']
+    description: 'Soft, gentle, and peaceful.',
+    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen', 'maya'],
+    avatarUrl: '/src/assets/images/ai_avatar_female_calm_1784217182118.jpg'
   },
   {
-    id: 'vega',
-    name: 'Psycheal Warm',
+    id: 'iris',
+    name: 'Iris',
     gender: 'female',
-    tone: 'Bright, energetic, high-pitch',
+    tone: 'Psycheal Calm (Soothing, Mid-range)',
+    pitchAdjust: 0.96,
+    rateAdjust: -0.04,
+    description: 'Calm and steady.',
+    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen', 'iris'],
+    avatarUrl: '/src/assets/images/iris_avatar_1784217433316.jpg'
+  },
+  {
+    id: 'clara',
+    name: 'Clara',
+    gender: 'female',
+    tone: 'Psycheal Calm (Soothing, Mid-range)',
+    pitchAdjust: 0.97,
+    rateAdjust: -0.06,
+    description: 'Clear, soft, and unhurried.',
+    keywords: ['siri', 'samantha', 'aria', 'female', 'google us english', 'zira', 'karen', 'clara'],
+    avatarUrl: '/src/assets/images/clara_avatar_1784217446879.jpg'
+  },
+  {
+    id: 'chloe',
+    name: 'Chloe',
+    gender: 'female',
+    tone: 'Psycheal Warm (Bright, Energetic)',
     pitchAdjust: 1.06,
-    rateAdjust: 0.05,
-    description: 'A bright, positive female voice for structured cognitive reframing and motivational coaching.',
-    keywords: ['jenny', 'zira', 'samantha', 'aria', 'natural', 'female', 'hazel']
-  },
-  {
-    id: 'ursa',
-    name: 'Psycheal Hope',
-    gender: 'female',
-    tone: 'Engaged, mid-range',
-    pitchAdjust: 1.0,
-    rateAdjust: 0.0,
-    description: 'A natural, balanced female voice with a warm, conversational, and highly engaged presence.',
-    keywords: ['samantha', 'aria', 'google us english', 'female', 'zira', 'siri']
-  },
-  {
-    id: 'orbit',
-    name: 'Psycheal Harmony',
-    gender: 'male',
-    tone: 'Energetic, high-pitch',
-    pitchAdjust: 1.04,
     rateAdjust: 0.04,
-    description: 'An enthusiastic, friendly male voice with an energetic rhythm and bright tone.',
-    keywords: ['google uk english male', 'david', 'guy', 'male', 'microsoft guy', 'he-il', 'mark']
+    description: 'Bright and friendly.',
+    keywords: ['jenny', 'zira', 'samantha', 'aria', 'natural', 'female', 'hazel', 'chloe'],
+    avatarUrl: '/src/assets/images/ai_avatar_female_bright_1784217213179.jpg'
   },
   {
-    id: 'lyra',
-    name: 'Psycheal Focus',
+    id: 'mia',
+    name: 'Mia',
     gender: 'female',
-    tone: 'Bright, energetic, high-pitch',
+    tone: 'Psycheal Warm (Bright, Energetic)',
     pitchAdjust: 1.08,
     rateAdjust: 0.06,
-    description: 'An exceptionally bright, crisp female voice that is vibrant and highly engaging.',
-    keywords: ['jenny', 'zira', 'aria', 'samantha', 'female', 'tessa']
+    description: 'Short, sweet, and uplifting.',
+    keywords: ['jenny', 'zira', 'samantha', 'aria', 'natural', 'female', 'hazel', 'mia'],
+    avatarUrl: '/src/assets/images/mia_avatar_1784217457479.jpg'
   },
   {
-    id: 'capella',
-    name: 'Psycheal Serenity',
+    id: 'sophie',
+    name: 'Sophie',
+    gender: 'female',
+    tone: 'Psycheal Focus (Vibrant, Crisp)',
+    pitchAdjust: 1.08,
+    rateAdjust: 0.05,
+    description: 'Sharp, clean, and attentive.',
+    keywords: ['jenny', 'zira', 'aria', 'samantha', 'female', 'tessa', 'sophie'],
+    avatarUrl: '/src/assets/images/sophie_avatar_1784217470275.jpg'
+  },
+  {
+    id: 'ava',
+    name: 'Ava',
+    gender: 'female',
+    tone: 'Psycheal Focus (Vibrant, Crisp)',
+    pitchAdjust: 1.10,
+    rateAdjust: 0.07,
+    description: 'Modern and energetic.',
+    keywords: ['jenny', 'zira', 'aria', 'samantha', 'female', 'tessa', 'ava'],
+    avatarUrl: '/src/assets/images/ava_avatar_1784217487130.jpg'
+  },
+  {
+    id: 'marcus',
+    name: 'Marcus',
     gender: 'male',
-    tone: 'Calm, supportive, low-pitch',
+    tone: 'Psycheal Serenity (Deep, Calming)',
     pitchAdjust: 0.92,
     rateAdjust: -0.04,
-    description: 'A deep, calming male voice perfect for somatic breathing and grounding biofeedback.',
-    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'george']
+    description: 'Feels grounded, deep, and steady.',
+    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'george', 'marcus'],
+    avatarUrl: '/src/assets/images/ai_avatar_male_deep_1784217197418.jpg'
   },
   {
-    id: 'eclipse',
-    name: 'Psycheal Gentle',
+    id: 'liam',
+    name: 'Liam',
     gender: 'male',
-    tone: 'Calm, supportive, mid-range',
+    tone: 'Psycheal Serenity (Deep, Calming)',
+    pitchAdjust: 0.94,
+    rateAdjust: -0.05,
+    description: 'Soft-spoken, calm, and approachable.',
+    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'george', 'liam'],
+    avatarUrl: '/src/assets/images/liam_avatar_1784217502258.jpg'
+  },
+  {
+    id: 'noah',
+    name: 'Noah',
+    gender: 'male',
+    tone: 'Psycheal Gentle (Supportive, Mid-range)',
     pitchAdjust: 0.96,
     rateAdjust: -0.02,
-    description: 'A smooth, balanced male voice providing a highly supportive, grounding presence.',
-    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'ravi']
+    description: 'Kind, supportive, and balanced.',
+    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'ravi', 'noah'],
+    avatarUrl: '/src/assets/images/ai_avatar_male_vibrant_1784217230801.jpg'
   },
   {
-    id: 'gemma',
-    name: 'Psycheal Joy',
-    gender: 'female',
-    tone: 'Bright, energetic, low-pitch',
-    pitchAdjust: 0.94,
-    rateAdjust: 0.02,
-    description: 'A rich, low-pitched female voice that blends warmth with professional clarity.',
-    keywords: ['google us english', 'samantha', 'aria', 'zira', 'female', 'karen']
-  },
-  {
-    id: 'orion',
-    name: 'Psycheal Energy',
+    id: 'elias',
+    name: 'Elias',
     gender: 'male',
-    tone: 'Bright, energetic, high-pitch',
+    tone: 'Psycheal Gentle (Supportive, Mid-range)',
+    pitchAdjust: 0.95,
+    rateAdjust: -0.03,
+    description: 'Warm, thoughtful, and steady.',
+    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'ravi', 'elias'],
+    avatarUrl: '/src/assets/images/elias_avatar_1784217532333.jpg'
+  },
+  {
+    id: 'leo',
+    name: 'Leo',
+    gender: 'male',
+    tone: 'Psycheal Energy (Vibrant, Motivating)',
     pitchAdjust: 1.02,
     rateAdjust: 0.05,
-    description: 'A vibrant, animated male voice that is highly motivating and crisp.',
-    keywords: ['google uk english male', 'david', 'guy', 'male', 'microsoft guy', 'mark']
+    description: 'Energetic, upbeat, and friendly.',
+    keywords: ['google uk english male', 'david', 'guy', 'male', 'microsoft guy', 'mark', 'leo'],
+    avatarUrl: '/src/assets/images/leo_avatar_1784217545812.jpg'
   },
   {
-    id: 'pinnacle',
-    name: 'Psycheal Peace',
+    id: 'julian',
+    name: 'Julian',
     gender: 'male',
-    tone: 'Calm, supportive, low-pitch',
+    tone: 'Psycheal Peace (Deep, Resonant)',
     pitchAdjust: 0.90,
     rateAdjust: -0.06,
-    description: 'A rich, deep, resonant male voice optimized for deep relaxation and meditation.',
-    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'george']
+    description: 'Deep, calming, and very soothing for meditation.',
+    keywords: ['david', 'guy', 'male', 'microsoft guy', 'google uk english male', 'george', 'julian'],
+    avatarUrl: '/src/assets/images/julian_avatar_1784217518214.jpg'
   }
 ];
 
 export default function VoiceCall({ userProfile }: VoiceCallProps) {
-  const [model, setModel] = useState<string>('signature');
+  const [model, setModel] = useState<string>('elena');
   const [activeVoiceTab, setActiveVoiceTab] = useState<'all' | 'female' | 'male'>('all');
   const [callStatus, setCallStatus] = useState<'idle' | 'connecting' | 'connected' | 'disconnected'>('idle');
   const [isMuted, setIsMuted] = useState(false);
@@ -477,9 +545,15 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const response = await fetch('/api/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           text: cleanSpeechText,
           voiceName: model,
@@ -549,9 +623,15 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const response = await fetch('/api/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           text: testPhrase,
           voiceName: model,
@@ -605,6 +685,9 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
     const currentProfile = GEMINI_VOICES.find(p => p.id === model) || GEMINI_VOICES[0];
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       // Format full conversation history (transcript) for the dedicated multi-turn Voice Reply endpoint
       const formattedTranscript = [
         ...transcript.map(msg => ({
@@ -619,7 +702,10 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
 
       const response = await fetch('/api/voice-reply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           transcript: formattedTranscript,
           voiceName: currentProfile.name,
@@ -628,7 +714,7 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
       });
 
       const data = await response.json();
-      const aiResponse = data.text || (currentProfile.id === 'nova' 
+      const aiResponse = data.text || (currentProfile.tone.includes('Calm') 
         ? "I hear how deep that feeling is. Take a gentle breath with me, breathing in calm, and releasing all tension."
         : `I am here to support you. Let's break down that feeling step-by-step together.`);
 
@@ -636,7 +722,7 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
       speakText(aiResponse);
     } catch (e) {
       console.error("Failed to generate voice reply, using local fallback:", e);
-      const fallbackMsg = currentProfile.id === 'nova' 
+      const fallbackMsg = currentProfile.tone.includes('Calm') 
         ? "I am here with you. Feel the weight of your feet on the ground and let everything else settle."
         : `Let's work through this together. We can find a structured way to look at this step-by-step.`;
       
@@ -814,7 +900,7 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
                       : 'bg-slate-50 text-brand-text-muted hover:text-brand-secondary border border-brand-border font-semibold'
                   }`}
                 >
-                  {tab === 'all' ? 'All (11)' : tab === 'female' ? 'Female (6)' : 'Male (5)'}
+                  {tab === 'all' ? 'All (16)' : tab === 'female' ? 'Female (10)' : 'Male (6)'}
                 </button>
               ))}
             </div>
@@ -826,7 +912,7 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
               ).map((profile) => {
                 const isSelected = model === profile.id;
                 const glowColor = profile.gender === 'female' 
-                  ? profile.id === 'nova' ? 'bg-amber-400' : 'bg-rose-400'
+                  ? profile.tone.includes('Calm') ? 'bg-amber-400' : 'bg-rose-400'
                   : 'bg-indigo-500';
 
                 return (
@@ -845,11 +931,26 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
                         : 'border-brand-border hover:border-brand-primary/40'
                     }`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2.5 h-2.5 rounded-full ${glowColor} animate-pulse`} />
-                          <h4 className="text-xs font-extrabold text-brand-secondary">{profile.name}</h4>
+                    <div className="flex gap-3.5 items-start">
+                      {profile.avatarUrl && (
+                        <div className="relative shrink-0">
+                          <img 
+                            src={profile.avatarUrl} 
+                            alt={profile.name} 
+                            className={`w-12 h-12 rounded-full object-cover border-2 transition-all duration-300 ${
+                              isSelected 
+                                ? profile.gender === 'female' ? 'border-[#2c6e49] scale-105 shadow-sm' : 'border-indigo-600 scale-105 shadow-sm'
+                                : 'border-slate-100 group-hover:border-slate-200'
+                            }`}
+                            referrerPolicy="no-referrer"
+                          />
+                          <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${glowColor} animate-pulse`} />
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-xs font-extrabold text-brand-secondary truncate">{profile.name}</h4>
                           <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide ${
                             profile.gender === 'female' 
                               ? 'bg-rose-50 text-rose-600 border border-rose-100' 
@@ -857,22 +958,22 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
                           }`}>
                             {profile.gender}
                           </span>
+                          {isSelected && (
+                            <span className={`p-0.5 text-white rounded-full ml-auto ${
+                              profile.gender === 'female' ? 'bg-[#2c6e49]' : 'bg-indigo-600'
+                            }`}>
+                              <Check className="w-2.5 h-2.5" />
+                            </span>
+                          )}
                         </div>
-                        <span className="block text-[10px] text-brand-primary font-bold uppercase tracking-wider">
+                        <span className="block text-[10px] text-brand-primary font-bold uppercase tracking-wider truncate">
                           {profile.tone}
                         </span>
+                        <p className="text-[10px] text-brand-text-muted font-semibold leading-relaxed pt-1">
+                          {profile.description}
+                        </p>
                       </div>
-                      {isSelected && (
-                        <span className={`p-1 text-white rounded-full ${
-                          profile.gender === 'female' ? 'bg-[#2c6e49]' : 'bg-indigo-600'
-                        }`}>
-                          <Check className="w-2.5 h-2.5" />
-                        </span>
-                      )}
                     </div>
-                    <p className="text-[10px] text-brand-text-muted font-semibold leading-relaxed mt-2.5">
-                      {profile.description}
-                    </p>
                   </div>
                 );
               })}
@@ -1000,7 +1101,7 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
             
             {/* Soft decorative visual background wave according to chosen model */}
             <div className={`absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 transition-all duration-1000 ${
-              model === 'nova' ? 'bg-amber-400' : 'bg-indigo-500'
+              (GEMINI_VOICES.find(p => p.id === model)?.tone.includes('Calm')) ? 'bg-amber-400' : 'bg-indigo-500'
             }`} />
 
             <div className="flex justify-between items-center z-10">
@@ -1024,30 +1125,70 @@ export default function VoiceCall({ userProfile }: VoiceCallProps) {
             {/* Immersive Soundwave visual display representing speech frequency responses */}
             <div className="flex flex-col items-center justify-center py-6 relative z-10 my-auto">
               {callStatus === 'idle' ? (
-                <div className="space-y-3 text-center">
-                  <div className="w-20 h-20 bg-slate-50 border border-brand-border rounded-full flex items-center justify-center mx-auto text-brand-text-muted hover:text-brand-primary cursor-pointer transition-colors" onClick={handleStartCall}>
-                    <PhoneCall className="w-8 h-8 text-brand-primary" />
+                <div className="space-y-4 text-center">
+                  <div className="relative w-24 h-24 mx-auto group cursor-pointer" onClick={handleStartCall}>
+                    <img 
+                      src={GEMINI_VOICES.find(p => p.id === model)?.avatarUrl} 
+                      alt={GEMINI_VOICES.find(p => p.id === model)?.name} 
+                      className="w-24 h-24 rounded-full object-cover border-4 border-slate-100 group-hover:border-brand-primary transition-all duration-300 shadow-md"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <PhoneCall className="w-8 h-8 text-white animate-pulse" />
+                    </div>
                   </div>
-                  <p className="text-xs text-brand-secondary font-extrabold">Ready to begin therapy session</p>
-                  <p className="text-[10px] text-brand-text-muted font-semibold max-w-xs mx-auto">
-                    Press start call to launch {GEMINI_VOICES.find(p => p.id === model)?.name || 'Psycheal Calm'} voice core.
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-brand-secondary font-extrabold">Ready to begin therapy session</p>
+                    <p className="text-[10px] text-brand-text-muted font-semibold max-w-xs mx-auto">
+                      Press start call to launch {GEMINI_VOICES.find(p => p.id === model)?.name || 'Psycheal Calm'} voice core.
+                    </p>
+                  </div>
                 </div>
               ) : callStatus === 'connecting' ? (
                 <div className="space-y-4 text-center">
-                  <div className="w-20 h-20 bg-[#eaf6ed] border border-[#d2edd8] rounded-full flex items-center justify-center mx-auto text-brand-primary animate-ping">
-                    <PhoneCall className="w-8 h-8" />
+                  <div className="relative w-24 h-24 mx-auto">
+                    <div className="absolute inset-0 rounded-full bg-brand-primary/20 animate-ping" />
+                    <img 
+                      src={GEMINI_VOICES.find(p => p.id === model)?.avatarUrl} 
+                      alt={GEMINI_VOICES.find(p => p.id === model)?.name} 
+                      className="w-24 h-24 rounded-full object-cover border-4 border-[#d2edd8] relative z-10 animate-pulse shadow-md"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
-                  <p className="text-xs text-brand-primary font-black uppercase tracking-wider">Establishing Neural Link...</p>
-                  <p className="text-[10px] text-brand-text-muted font-semibold">Configuring audio frequency buffers for voice synthesis.</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-brand-primary font-black uppercase tracking-wider">Establishing Neural Link...</p>
+                    <p className="text-[10px] text-brand-text-muted font-semibold">Configuring audio frequency buffers for voice synthesis.</p>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-6 text-center w-full">
+                <div className="space-y-5 text-center w-full">
                   
+                  {/* Pulsing rings and high-fidelity avatar representation */}
+                  <div className="relative w-28 h-28 mx-auto mb-2">
+                    <div className={`absolute inset-0 rounded-full transition-all duration-500 bg-radial ${
+                      aiSpeaking 
+                        ? 'from-[#5bb374]/30 to-teal-400/5 scale-125 animate-ping' 
+                        : isRecording 
+                          ? 'from-amber-400/20 to-orange-400/5 scale-115 animate-pulse' 
+                          : 'from-slate-400/10 to-indigo-500/5 scale-100'
+                    }`} />
+                    <img 
+                      src={GEMINI_VOICES.find(p => p.id === model)?.avatarUrl} 
+                      alt={GEMINI_VOICES.find(p => p.id === model)?.name} 
+                      className={`w-28 h-28 rounded-full object-cover border-4 relative z-10 transition-all duration-500 shadow-xl ${
+                        aiSpeaking 
+                          ? 'border-[#5bb374] scale-105' 
+                          : isRecording 
+                            ? 'border-amber-400 scale-102' 
+                            : 'border-slate-200'
+                      }`}
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+
                   {/* Dynamic CSS Waveform Visual Equalizer bars */}
-                  <div className="flex justify-center items-center gap-1.5 h-16 w-full max-w-sm mx-auto">
+                  <div className="flex justify-center items-center gap-1.5 h-10 w-full max-w-sm mx-auto">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((bar) => {
-                      // Generate varying random or model-paced animation timings
                       const animationDelay = `${(bar * 0.12).toFixed(2)}s`;
                       const animStyle = aiSpeaking 
                         ? { animation: `waveBounce 1s ease-in-out infinite alternate ${animationDelay}` }

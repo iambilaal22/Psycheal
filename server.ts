@@ -247,6 +247,46 @@ function isAIUnavailableError(error: any): boolean {
   );
 }
 
+import { createClient as createBackendSupabaseClient } from '@supabase/supabase-js';
+
+const sbUrl = process.env.VITE_SUPABASE_URL || '';
+const sbAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+
+const isRealBackendSupabaseConfigured = 
+  !!sbUrl && 
+  !!sbAnonKey && 
+  sbUrl !== 'YOUR_SUPABASE_URL' && 
+  sbAnonKey !== 'YOUR_SUPABASE_ANON_KEY';
+
+const backendSupabase = isRealBackendSupabaseConfigured 
+  ? createBackendSupabaseClient(sbUrl, sbAnonKey) 
+  : null;
+
+async function getUserIdFromRequest(req: any): Promise<string> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return req.body?.userId || req.query?.userId || 'bilaallive2021';
+  }
+  const token = authHeader.split(' ')[1];
+
+  if (token.startsWith('sb-token-')) {
+    return token.replace('sb-token-', '') || 'bilaallive2021';
+  }
+
+  if (backendSupabase) {
+    try {
+      const { data: { user }, error } = await backendSupabase.auth.getUser(token);
+      if (!error && user) {
+        return user.id;
+      }
+    } catch (err) {
+      console.error("Backend Supabase JWT validation error:", err);
+    }
+  }
+
+  return 'bilaallive2021';
+}
+
 // API routes go here FIRST
 app.get('/api/check-key', (req, res) => {
   res.json({ 
@@ -259,7 +299,8 @@ app.get('/api/check-key', (req, res) => {
 
 // Endpoint 1: Conversational Chat / Companion with Memory Integration
 app.post('/api/chat', async (req, res) => {
-  const { messages, userId = 'bilaallive2021' } = req.body;
+  const { messages } = req.body;
+  const userId = await getUserIdFromRequest(req);
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Invalid messages array" });
   }
@@ -298,7 +339,8 @@ app.post('/api/chat', async (req, res) => {
 
 // Endpoint 2: Voice Call Conversational Processor with Memory Integration
 app.post('/api/voice-reply', async (req, res) => {
-  const { transcript, voiceName, voiceTone, userId = 'bilaallive2021' } = req.body;
+  const { transcript, voiceName, voiceTone } = req.body;
+  const userId = await getUserIdFromRequest(req);
   
   try {
     const memoryContext = await memoryService.compileContextForPrompt(userId);
@@ -622,7 +664,7 @@ The response must contain:
 
 // --- NEW ENDPOINTS: Personal Memory Management ---
 app.get('/api/memories', async (req, res) => {
-  const userId = req.query.userId as string || 'bilaallive2021';
+  const userId = await getUserIdFromRequest(req);
   try {
     const list = await memoryService.getAllMemoriesForUser(userId);
     res.json({ success: true, memories: list });
@@ -632,7 +674,8 @@ app.get('/api/memories', async (req, res) => {
 });
 
 app.post('/api/memories', async (req, res) => {
-  const { text, category, userId = 'bilaallive2021' } = req.body;
+  const { text, category } = req.body;
+  const userId = await getUserIdFromRequest(req);
   if (!text || !category) {
     return res.status(400).json({ success: false, error: "Text and category are required" });
   }
@@ -645,7 +688,7 @@ app.post('/api/memories', async (req, res) => {
 });
 
 app.delete('/api/memories/:id', async (req, res) => {
-  const userId = req.query.userId as string || 'bilaallive2021';
+  const userId = await getUserIdFromRequest(req);
   const memoryId = req.params.id;
   try {
     const success = await memoryService.deleteMemory(userId, memoryId);

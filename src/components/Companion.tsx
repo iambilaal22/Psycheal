@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile, ChatSession, ChatMessage } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface CompanionProps {
   userProfile: UserProfile;
@@ -79,6 +80,10 @@ export default function Companion({
   const [selectedVoice, setSelectedVoice] = useState<"nova" | "capella">("nova");
   const [showApiInfo, setShowApiInfo] = useState<boolean>(true);
   const [elevenLabsConfigured, setElevenLabsConfigured] = useState<boolean>(false);
+
+  const activePhotoUrl = selectedVoice === "nova" 
+    ? "/src/assets/images/ai_avatar_female_calm_1784217182118.jpg" // Maya (Calm female)
+    : "/src/assets/images/ai_avatar_male_deep_1784217197418.jpg"; // Marcus (Deep male)
 
   // Advanced interactivity & aesthetics states
   const [copiedMsgIdx, setCopiedMsgIdx] = useState<number | null>(null);
@@ -321,9 +326,15 @@ export default function Companion({
     setIsGenerating(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ messages: updatedMessages })
       });
       const data = await response.json();
@@ -402,9 +413,15 @@ export default function Companion({
     setIsGenerating(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const response = await fetch('/api/voice-reply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ transcript: text })
       });
       const data = await response.json();
@@ -454,10 +471,16 @@ export default function Companion({
     const cleanText = text.replace(/\[.*?\]/g, "").replace(/\*+/g, "").trim();
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       // Fetch /api/tts to route through the secure full-stack backend voice service
       const response = await fetch('/api/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           text: cleanText,
           voiceName: selectedVoice, // 'nova' or 'capella'
@@ -735,28 +758,41 @@ export default function Companion({
                   isSpeaking ? 'w-64 h-64 scale-110' : isListening ? 'w-56 h-56 scale-100 animate-pulse' : 'w-48 h-48 scale-90'
                 }`} />
 
-                {/* Central interactive orb button */}
+                {/* Central interactive orb button with beautiful photorealistic avatar */}
                 <button
                   onClick={handleInterruptSpeech}
-                  className={`w-36 h-36 rounded-full flex flex-col items-center justify-center relative cursor-pointer focus:outline-none transition-all duration-500 shadow-2xl ${
+                  className={`w-36 h-36 rounded-full overflow-hidden relative cursor-pointer focus:outline-none transition-all duration-500 shadow-2xl border-4 ${
                     isSpeaking 
-                      ? 'bg-linear-to-tr from-brand-primary to-indigo-500 hover:opacity-90 shadow-brand-primary/40' 
+                      ? 'border-brand-primary shadow-brand-primary/40' 
                       : isListening 
-                        ? 'bg-linear-to-tr from-emerald-500 to-teal-400 shadow-emerald-500/30' 
-                        : 'bg-linear-to-tr from-slate-800 to-indigo-900 border border-slate-700'
+                        ? 'border-emerald-400 shadow-emerald-500/30' 
+                        : 'border-slate-700'
                   }`}
                   id="voice-call-orb-btn"
                 >
-                  {isSpeaking ? (
-                    <Volume2 className="w-10 h-10 animate-bounce" />
-                  ) : isListening ? (
-                    <Mic className="w-10 h-10 text-white animate-pulse" />
-                  ) : (
-                    <Bot className="w-10 h-10 text-indigo-300" />
-                  )}
-                  <span className="text-[9px] font-black uppercase tracking-widest mt-2 block">
-                    {isSpeaking ? "Tap to skip" : isListening ? "Listening" : "Pulsing"}
-                  </span>
+                  {/* Photo of the virtual counselor */}
+                  <img 
+                    src={activePhotoUrl} 
+                    alt={selectedVoice === 'nova' ? "Maya" : "Marcus"} 
+                    className="absolute inset-0 w-full h-full object-cover brightness-[0.7] hover:brightness-[0.9] transition-all duration-300"
+                    referrerPolicy="no-referrer"
+                  />
+                  {/* Overlay icon and text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 text-white z-10 p-2 text-center">
+                    {isSpeaking ? (
+                      <Volume2 className="w-8 h-8 animate-bounce text-brand-primary" />
+                    ) : isListening ? (
+                      <Mic className="w-8 h-8 text-emerald-400 animate-pulse" />
+                    ) : (
+                      <Wind className="w-8 h-8 text-indigo-300 animate-spin-slow" />
+                    )}
+                    <span className="text-[9px] font-black uppercase tracking-widest mt-1.5 block drop-shadow-md">
+                      {selectedVoice === 'nova' ? "Maya" : "Marcus"}
+                    </span>
+                    <span className="text-[7px] font-bold uppercase tracking-widest block opacity-90 mt-0.5 drop-shadow-sm animate-pulse">
+                      {isSpeaking ? "Tap to skip" : isListening ? "Listening" : "Breathing"}
+                    </span>
+                  </div>
                 </button>
               </div>
 
@@ -836,25 +872,37 @@ export default function Companion({
               <div className="flex gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl">
                 <button
                   onClick={() => setSelectedVoice("nova")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     selectedVoice === "nova" 
                       ? 'bg-brand-primary text-white shadow-md' 
                       : 'text-slate-400 hover:text-white'
                   }`}
                   id="voice-select-nova-btn"
                 >
-                  👭 Psycheal Calm
+                  <img 
+                    src="/src/assets/images/ai_avatar_female_calm_1784217182118.jpg" 
+                    alt="Maya" 
+                    className="w-5 h-5 rounded-full object-cover border border-slate-700"
+                    referrerPolicy="no-referrer"
+                  />
+                  <span>Maya (Calm)</span>
                 </button>
                 <button
                   onClick={() => setSelectedVoice("capella")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     selectedVoice === "capella" 
                       ? 'bg-brand-primary text-white shadow-md' 
                       : 'text-slate-400 hover:text-white'
                   }`}
                   id="voice-select-capella-btn"
                 >
-                  👨 Psycheal Serenity
+                  <img 
+                    src="/src/assets/images/ai_avatar_male_deep_1784217197418.jpg" 
+                    alt="Marcus" 
+                    className="w-5 h-5 rounded-full object-cover border border-slate-700"
+                    referrerPolicy="no-referrer"
+                  />
+                  <span>Marcus (Serenity)</span>
                 </button>
               </div>
 

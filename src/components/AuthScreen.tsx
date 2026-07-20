@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../types';
 import { BrandLogoIMG7751 as BrandLogo } from './BrandLogo';
-import { auth, isRealFirebaseConfigured } from '../lib/firebase';
+import { supabase, isRealSupabaseConfigured } from '../lib/supabase';
 
 interface AuthScreenProps {
   onAuthSuccess: (profile: UserProfile) => void;
@@ -66,96 +66,88 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     setLoading(true);
 
     if (isSignUp) {
-      if (isRealFirebaseConfigured) {
-        try {
-          const { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } = await import('firebase/auth');
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          if (auth.currentUser) {
-            await updateProfile(auth.currentUser, { displayName: nickname });
-            await sendEmailVerification(auth.currentUser);
-            
-            setTempProfile({
-              uid: userCredential.user.uid,
-              email: userCredential.user.email || email,
-              nickname,
-              premium: isPremium,
-              joinedAt: new Date().toISOString(),
-              checkInStreak: 1,
-              dailyGoalMinutes: 15
-            });
-            setVerificationMode(true);
-            setNotification('A verification link has been sent to your email. Please check your inbox.');
+      try {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { nickname }
           }
-        } catch (err: any) {
-          setError(err.message || 'An error occurred during signup. Please try again.');
-        } finally {
-          setLoading(false);
+        });
+
+        if (signUpError) {
+          throw signUpError;
         }
-      } else {
-        // Fallback Mock Email Verification Signup
-        setTimeout(() => {
-          const generatedCode = String(Math.floor(100000 + Math.random() * 900000));
-          setMockExpectedCode(generatedCode);
+
+        if (data.session) {
+          // Logged in immediately (e.g. sandbox or auto-confirm enabled)
+          const profile: UserProfile = {
+            uid: data.user?.id || `user_${Date.now()}`,
+            email: data.user?.email || email,
+            nickname: data.user?.user_metadata?.nickname || nickname,
+            premium: isPremium,
+            joinedAt: new Date().toISOString(),
+            checkInStreak: 1,
+            dailyGoalMinutes: 15
+          };
+          onAuthSuccess(profile);
+        } else {
+          // Email confirmation is required
           setTempProfile({
-            uid: `user_${Date.now()}`,
-            email,
-            nickname,
+            uid: data.user?.id || `user_${Date.now()}`,
+            email: data.user?.email || email,
+            nickname: data.user?.user_metadata?.nickname || nickname,
             premium: isPremium,
             joinedAt: new Date().toISOString(),
             checkInStreak: 1,
             dailyGoalMinutes: 15
           });
+          
+          if (!isRealSupabaseConfigured) {
+            // Simulated sandbox flow
+            const generatedCode = String(Math.floor(100000 + Math.random() * 900000));
+            setMockExpectedCode(generatedCode);
+            setNotification('A simulated 6-digit verification code has been generated.');
+          } else {
+            setNotification('A verification link has been sent to your email. Please check your inbox.');
+          }
           setVerificationMode(true);
-          setLoading(false);
-          setNotification('A simulated 6-digit verification code has been generated.');
-        }, 800);
+        }
+      } catch (err: any) {
+        setError(err.message || 'An error occurred during signup. Please try again.');
+      } finally {
+        setLoading(false);
       }
     } else {
       // Sign In Flow
-      if (isRealFirebaseConfigured) {
-        try {
-          const { signInWithEmailAndPassword, sendEmailVerification, signOut } = await import('firebase/auth');
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          
-          if (!userCredential.user.emailVerified) {
-            // Send another verification link and sign out
-            await sendEmailVerification(userCredential.user);
-            await signOut(auth);
-            setError('Your email address is not verified yet. We have sent a new verification link to your email. Please check your inbox and verify your email before logging in.');
-            setLoading(false);
-            return;
-          }
+      try {
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
 
+        if (signInError) {
+          throw signInError;
+        }
+
+        if (data.session) {
           const verifiedProfile: UserProfile = {
-            uid: userCredential.user.uid,
-            email: userCredential.user.email || email,
-            nickname: userCredential.user.displayName || email.split('@')[0],
+            uid: data.user?.id || `user_${Date.now()}`,
+            email: data.user?.email || email,
+            nickname: data.user?.user_metadata?.nickname || email.split('@')[0],
             premium: isPremium,
             joinedAt: new Date().toISOString(),
             checkInStreak: 1,
             dailyGoalMinutes: 15
           };
           onAuthSuccess(verifiedProfile);
-        } catch (err: any) {
-          setError(err.message || 'Invalid email or password. Please try again.');
-        } finally {
-          setLoading(false);
+        } else {
+          setError('Failed to establish a valid session. Please verify your email confirmation.');
         }
-      } else {
-        // Fallback Mock Sign In
-        setTimeout(() => {
-          const mockProfile: UserProfile = {
-            uid: `user_${Date.now()}`,
-            email,
-            nickname: email.split('@')[0],
-            premium: isPremium,
-            joinedAt: new Date().toISOString(),
-            checkInStreak: 1,
-            dailyGoalMinutes: 15
-          };
-          setLoading(false);
-          onAuthSuccess(mockProfile);
-        }, 800);
+      } catch (err: any) {
+        setError(err.message || 'Invalid email or password. Please try again.');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -179,23 +171,28 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     }, 1000);
   };
 
-  const handleCheckRealFirebaseVerification = async () => {
+  const handleCheckRealVerification = async () => {
     setError('');
     setNotification('');
     setLoading(true);
 
     try {
-      if (auth.currentUser) {
-        await auth.currentUser.reload();
-        if (auth.currentUser.emailVerified) {
-          if (tempProfile) {
-            onAuthSuccess(tempProfile);
-          }
-        } else {
-          setError('Email not verified yet. Please check your email inbox and click the verification link.');
-        }
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+
+      if (session) {
+        const verifiedProfile: UserProfile = {
+          uid: session.user.id,
+          email: session.user.email || email,
+          nickname: session.user.user_metadata?.nickname || nickname,
+          premium: isPremium,
+          joinedAt: new Date().toISOString(),
+          checkInStreak: 1,
+          dailyGoalMinutes: 15
+        };
+        onAuthSuccess(verifiedProfile);
       } else {
-        setError('No active user session found. Please try logging in again.');
+        setError('Session not established yet. Please check your email inbox and click the verification link.');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to verify email status. Please try again.');
@@ -209,15 +206,17 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     setNotification('');
     setCountdown(60);
 
-    if (isRealFirebaseConfigured) {
+    if (isRealSupabaseConfigured) {
       try {
-        if (auth.currentUser) {
-          const { sendEmailVerification } = await import('firebase/auth');
-          await sendEmailVerification(auth.currentUser);
-          setNotification('A fresh verification link has been sent to your email.');
-        } else {
-          setError('Failed to resend verification. Please sign up again.');
-        }
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { nickname }
+          }
+        });
+        if (error) throw error;
+        setNotification('A fresh verification link has been sent to your email.');
       } catch (err: any) {
         setError(err.message || 'Failed to resend verification email.');
       }
@@ -227,6 +226,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       setNotification(`A new simulated 6-digit verification code has been generated.`);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col md:flex-row" id="auth-screen-container">
@@ -358,7 +358,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                   </span>
                   <p className="text-xs font-bold text-brand-primary break-all">{email}</p>
                   
-                  {!isRealFirebaseConfigured && (
+                  {!isRealSupabaseConfigured && (
                     <div className="pt-2 border-t border-brand-border mt-2 space-y-2">
                       <div className="text-[10px] font-bold text-emerald-800 bg-emerald-50 py-1 px-2.5 rounded-md inline-block uppercase tracking-wider">
                         Preview Sandbox Active
@@ -375,13 +375,13 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                   )}
                 </div>
 
-                {isRealFirebaseConfigured ? (
+                {isRealSupabaseConfigured ? (
                   <div className="space-y-4">
                     <p className="text-xs text-brand-text-muted leading-relaxed">
                       Please open the link we emailed to <strong className="text-brand-secondary">{email}</strong> to verify your account, then click the confirmation button below.
                     </p>
                     <button
-                      onClick={handleCheckRealFirebaseVerification}
+                      onClick={handleCheckRealVerification}
                       disabled={loading}
                       className="w-full py-3 px-4 rounded-xl shadow-xs text-xs font-extrabold text-white bg-brand-primary hover:bg-brand-primary-hover focus:outline-none focus:ring-1 focus:ring-brand-primary transition-all duration-150 flex items-center justify-center cursor-pointer"
                     >

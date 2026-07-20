@@ -11,6 +11,7 @@ import Profile from './components/Profile';
 import Emergency from './components/Emergency';
 import VoiceCall from './components/VoiceCall';
 import PersonalMemory from './components/PersonalMemory';
+import { supabase } from './lib/supabase';
 import { 
   UserProfile, 
   MoodRecord, 
@@ -33,6 +34,30 @@ export default function App() {
   const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(null);
   const [showGeminiBanner, setShowGeminiBanner] = useState<boolean>(true);
   const [syncStatus, setSyncStatus] = useState<'checking' | 'syncing' | 'connected' | 'unconfigured' | 'offline'>('checking');
+
+  // Supabase auth subscription to persist separate session tokens per browser
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
+      if (session) {
+        setUserProfile({
+          uid: session.user.id,
+          email: session.user.email || '',
+          nickname: session.user.user_metadata?.nickname || session.user.email?.split('@')[0] || 'Soul',
+          premium: true,
+          joinedAt: session.user.created_at || new Date().toISOString(),
+          checkInStreak: 3,
+          dailyGoalMinutes: 15
+        });
+      } else {
+        setUserProfile(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
 
   // Theme state: dark (default) or light
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -135,7 +160,8 @@ export default function App() {
     setUserProfile(profile);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUserProfile(null);
     setActiveTab('companion');
   };
@@ -239,7 +265,7 @@ export default function App() {
         );
       case 'memory':
         return (
-          <PersonalMemory />
+          <PersonalMemory userProfile={userProfile} />
         );
       case 'journal':
         return (
@@ -314,129 +340,6 @@ export default function App() {
 
       {/* Main View Workspace */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {showGeminiBanner && (
-          <div className="bg-white border-b border-brand-border px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 transition-all duration-300 relative overflow-hidden" id="gemini-status-banner">
-            {/* Soft decorative background glow */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-radial from-[#5bb374]/5 to-transparent blur-2xl pointer-events-none" />
-            
-            <div className="flex items-start gap-4 z-10 max-w-4xl">
-              <div className={`p-2.5 rounded-xl shrink-0 transition-all duration-300 ${
-                syncStatus === 'connected' 
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                  : syncStatus === 'syncing' 
-                    ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' 
-                    : syncStatus === 'offline'
-                      ? 'bg-rose-50 text-rose-600 border border-rose-100'
-                      : 'bg-[#eaf6ed]/80 text-[#2c6e49] border border-[#d2edd8]'
-              }`}>
-                {syncStatus === 'syncing' ? (
-                  <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
-                ) : syncStatus === 'offline' ? (
-                  <WifiOff className="w-5 h-5 text-rose-600" />
-                ) : (
-                  <Sparkles className="w-5 h-5 animate-pulse" />
-                )}
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-black text-brand-secondary flex flex-wrap items-center gap-2">
-                  <span>Gemini AI Integration Status</span>
-                  {syncStatus === 'syncing' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[9px] font-bold rounded-full uppercase tracking-wider">
-                      <RefreshCw className="w-2.5 h-2.5 animate-spin shrink-0" />
-                      Syncing...
-                    </span>
-                  )}
-                  {syncStatus === 'connected' && (
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-full uppercase tracking-wider border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                      Securely Connected
-                    </span>
-                  )}
-                  {syncStatus === 'unconfigured' && (
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber-100 text-amber-800 text-[9px] font-bold rounded-full uppercase tracking-wider border border-amber-200 animate-pulse">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                      Setup Required
-                    </span>
-                  )}
-                  {syncStatus === 'offline' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-100 text-rose-800 text-[9px] font-bold rounded-full uppercase tracking-wider border border-rose-200">
-                      <WifiOff className="w-2.5 h-2.5 shrink-0" />
-                      Offline
-                    </span>
-                  )}
-                  {syncStatus === 'checking' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-800 text-[9px] font-bold rounded-full uppercase tracking-wider border border-slate-200">
-                      Checking...
-                    </span>
-                  )}
-                </h3>
-                
-                <p className="text-xs text-brand-text-muted font-semibold leading-relaxed">
-                  PsycHeal leverages Google's advanced Gemini models on our secure full-stack backend.
-                </p>
-
-                {syncStatus === 'syncing' ? (
-                  <div className="flex items-center gap-1.5 text-xs text-indigo-700 font-bold mt-1.5">
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-600 shrink-0" />
-                    <span>Verifying secure end-to-end socket connection and verifying cloud environment keys...</span>
-                  </div>
-                ) : syncStatus === 'offline' ? (
-                  <div className="flex items-center gap-1.5 text-xs text-rose-700 font-bold mt-1.5">
-                    <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0" />
-                    <span>Communication offline. Check your network or review your configured GEMINI_API_KEY.</span>
-                  </div>
-                ) : geminiConfigured === false ? (
-                  <div className="mt-2.5 pt-2.5 border-t border-brand-border space-y-2">
-                    <p className="text-xs font-bold text-brand-secondary">
-                      To activate deep customized AI reflection &amp; dynamic CBT plans:
-                    </p>
-                    <ul className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-                      <li className="flex items-start gap-2 bg-slate-50/50 border border-brand-border p-2.5 rounded-xl text-[11px] font-semibold text-brand-text">
-                        <span className="w-5 h-5 rounded-full bg-[#eaf6ed] border border-[#d2edd8] text-[#2c6e49] flex items-center justify-center text-[10px] font-black shrink-0">1</span>
-                        <span>Acquire an API Key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-[#2c6e49] font-bold underline hover:text-[#1e4e32]">Google AI Studio</a>.</span>
-                      </li>
-                      <li className="flex items-start gap-2 bg-slate-50/50 border border-brand-border p-2.5 rounded-xl text-[11px] font-semibold text-brand-text">
-                        <span className="w-5 h-5 rounded-full bg-[#eaf6ed] border border-[#d2edd8] text-[#2c6e49] flex items-center justify-center text-[10px] font-black shrink-0">2</span>
-                        <span>Open the <strong className="text-brand-secondary font-bold">Settings &gt; Secrets</strong> panel in this app workspace.</span>
-                      </li>
-                      <li className="flex items-start gap-2 bg-slate-50/50 border border-brand-border p-2.5 rounded-xl text-[11px] font-semibold text-brand-text">
-                        <span className="w-5 h-5 rounded-full bg-[#eaf6ed] border border-[#d2edd8] text-[#2c6e49] flex items-center justify-center text-[10px] font-black shrink-0">3</span>
-                        <span>Bind your key to the <code className="bg-slate-100 px-1 py-0.5 rounded text-[10px] font-mono font-bold text-[#2c6e49]">GEMINI_API_KEY</code> field.</span>
-                      </li>
-                    </ul>
-                  </div>
-                ) : geminiConfigured === true ? (
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-bold mt-1.5">
-                    <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
-                    <span>Deep customized AI reflection &amp; dynamic CBT plans are fully enabled. Securely connected to Google AI Studio.</span>
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mt-1" />
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 z-10 shrink-0 md:self-center">
-              <button
-                onClick={triggerSyncCheck}
-                disabled={syncStatus === 'syncing'}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-brand-secondary bg-slate-50 hover:bg-slate-100 border border-brand-border rounded-xl cursor-pointer transition-all hover:shadow-xs active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                title="Synchronize and re-verify API key connection state"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 text-brand-primary ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
-                <span>Sync Now</span>
-              </button>
-              <button
-                onClick={() => setShowGeminiBanner(false)}
-                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors cursor-pointer"
-                title="Dismiss Banner"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
         {renderActiveTab()}
       </main>
 

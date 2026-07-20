@@ -12,6 +12,8 @@ import {
   Sparkles,
   Info
 } from 'lucide-react';
+import { UserProfile } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface DBMemory {
   id: string;
@@ -22,7 +24,11 @@ interface DBMemory {
   createdAt: string;
 }
 
-export default function PersonalMemory() {
+interface PersonalMemoryProps {
+  userProfile: UserProfile;
+}
+
+export default function PersonalMemory({ userProfile }: PersonalMemoryProps) {
   const [memories, setMemories] = useState<DBMemory[]>([]);
   const [newText, setNewText] = useState('');
   const [newCategory, setNewCategory] = useState<'preference' | 'goal' | 'habit'>('preference');
@@ -34,9 +40,23 @@ export default function PersonalMemory() {
     databaseType: 'JSON-File DB'
   });
 
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || '';
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
   const fetchMemoriesAndStatus = async () => {
     try {
-      const memRes = await fetch('/api/memories');
+      const headers = await getAuthHeaders();
+      const memRes = await fetch('/api/memories', {
+        headers: {
+          'Authorization': headers['Authorization']
+        }
+      });
       const memData = await memRes.json();
       if (memData.success) {
         setMemories(memData.memories);
@@ -66,9 +86,10 @@ export default function PersonalMemory() {
 
     setAdding(true);
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch('/api/memories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           text: newText.trim(),
           category: newCategory
@@ -88,8 +109,12 @@ export default function PersonalMemory() {
 
   const handleDeleteMemory = async (id: string) => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`/api/memories/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': headers['Authorization']
+        }
       });
       const data = await response.json();
       if (data.success) {
