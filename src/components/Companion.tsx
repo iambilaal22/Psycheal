@@ -80,6 +80,13 @@ export default function Companion({
   const [selectedVoice, setSelectedVoice] = useState<"nova" | "capella">("nova");
   const [showApiInfo, setShowApiInfo] = useState<boolean>(true);
   const [elevenLabsConfigured, setElevenLabsConfigured] = useState<boolean>(false);
+  const [apiConfig, setApiConfig] = useState<{
+    configured: boolean;
+    elevenLabsConfigured: boolean;
+    aiProvider: string;
+    databaseType: string;
+  } | null>(null);
+  const [isCheckingKey, setIsCheckingKey] = useState<boolean>(true);
 
   const activePhotoUrl = selectedVoice === "nova" 
     ? "/src/assets/images/ai_avatar_female_calm_1784217182118.jpg" // Maya (Calm female)
@@ -113,11 +120,16 @@ export default function Companion({
     fetch('/api/check-key')
       .then(res => res.json())
       .then(data => {
+        setApiConfig(data);
         if (data.elevenLabsConfigured) {
           setElevenLabsConfigured(true);
         }
+        setIsCheckingKey(false);
       })
-      .catch(err => console.warn("Failed to check ElevenLabs configuration in Companion:", err));
+      .catch(err => {
+        console.warn("Failed to check ElevenLabs configuration in Companion:", err);
+        setIsCheckingKey(false);
+      });
   }, []);
 
   // Initialize Speech Recognition
@@ -691,7 +703,22 @@ export default function Companion({
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-brand-secondary">PsycHeal AI Companion</h3>
+              <h3 className="text-sm font-black text-brand-secondary flex items-center gap-2">
+                PsycHeal AI Companion
+                {isCheckingKey ? (
+                  <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold tracking-wider animate-pulse">
+                    CHECKING
+                  </span>
+                ) : apiConfig?.configured ? (
+                  <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-md font-bold tracking-wider uppercase">
+                    Gemini Online
+                  </span>
+                ) : (
+                  <span className="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-md font-bold tracking-wider uppercase animate-pulse">
+                    Local Backup
+                  </span>
+                )}
+              </h3>
               <p className="text-[10px] text-brand-text-muted font-bold flex items-center gap-1 uppercase tracking-wider">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" /> Calming Space Live
               </p>

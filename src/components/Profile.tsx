@@ -22,6 +22,26 @@ export default function Profile({
   const [nick, setNick] = useState<string>(userProfile.nickname);
   const [goal, setGoal] = useState<number>(userProfile.dailyGoalMinutes);
   const [successMsg, setSuccessMsg] = useState<string>('');
+  const [apiConfig, setApiConfig] = useState<{
+    configured: boolean;
+    elevenLabsConfigured: boolean;
+    aiProvider: string;
+    databaseType: string;
+  } | null>(null);
+  const [isCheckingKey, setIsCheckingKey] = useState<boolean>(true);
+
+  React.useEffect(() => {
+    fetch('/api/check-key')
+      .then(res => res.json())
+      .then(data => {
+        setApiConfig(data);
+        setIsCheckingKey(false);
+      })
+      .catch(err => {
+        console.warn("Failed to check API key configuration in Profile:", err);
+        setIsCheckingKey(false);
+      });
+  }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,19 +201,62 @@ export default function Profile({
           <div className="bg-slate-900 border border-slate-800 text-white rounded-3xl p-6 shadow-md space-y-4" id="profile-secrets-card">
             <div className="flex items-center gap-2 mb-1">
               <Key className="w-5 h-5 text-indigo-300" />
-              <h3 className="text-sm font-black uppercase tracking-wider text-indigo-200">API Key configuration</h3>
+              <h3 className="text-sm font-black uppercase tracking-wider text-indigo-200">API & Integration Status</h3>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed font-medium">
               PsycHeal leverages advanced clinical reasoning models on our secure full-stack backend.
             </p>
 
-            <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl text-[11px] space-y-2 text-slate-400 font-semibold leading-relaxed">
-              <p className="text-white font-extrabold">To activate deep customized AI reflection & dynamic CBT plans:</p>
+            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-300">Gemini AI Integration Status</span>
+                {isCheckingKey ? (
+                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold animate-pulse">CHECKING</span>
+                ) : apiConfig?.configured ? (
+                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-extrabold tracking-wider animate-pulse inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full inline-block animate-ping" /> ONLINE
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full font-extrabold tracking-wider inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-rose-400 rounded-full inline-block" /> OFFLINE
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center justify-between border-t border-slate-800/40 pt-2.5">
+                <span className="text-xs font-bold text-slate-300">ElevenLabs Voice Status</span>
+                {isCheckingKey ? (
+                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold animate-pulse">CHECKING</span>
+                ) : apiConfig?.elevenLabsConfigured ? (
+                  <span className="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 px-2.5 py-0.5 rounded-full font-extrabold tracking-wider inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full inline-block" /> ACTIVE
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-slate-800 text-slate-500 border border-slate-800 px-2.5 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-slate-600 rounded-full inline-block" /> LOCAL FALLBACK
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-800/40 pt-2.5">
+                <span className="text-xs font-bold text-slate-300">Database Connection</span>
+                {isCheckingKey ? (
+                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold animate-pulse">CHECKING</span>
+                ) : (
+                  <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-extrabold tracking-wider inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full inline-block" /> ACTIVE ({apiConfig?.databaseType || 'JSON-File DB'})
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-950/40 border border-slate-800/60 rounded-2xl text-[11px] space-y-2 text-slate-400 font-semibold leading-relaxed">
+              <p className="text-slate-300 font-extrabold">Instructions for Customization:</p>
               <ul className="list-disc pl-4 space-y-1">
-                <li>Acquire a standard reasoning developer API Key.</li>
-                <li>Open the <span className="text-indigo-400 font-bold">Settings &gt; Secrets</span> panel in this app workspace.</li>
-                <li>Bind your key to the <span className="text-indigo-400 font-bold">GEMINI_API_KEY</span> field.</li>
+                <li>Acquire keys for Gemini AI or ElevenLabs.</li>
+                <li>Go to the <span className="text-indigo-400 font-bold">Settings &gt; Secrets</span> panel in this workspace.</li>
+                <li>Set <code className="text-indigo-300 px-1 rounded bg-slate-900">GEMINI_API_KEY</code> and <code className="text-indigo-300 px-1 rounded bg-slate-900">ELEVENLABS_API_KEY</code>.</li>
               </ul>
             </div>
           </div>
