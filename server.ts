@@ -723,7 +723,7 @@ const initServer = async () => {
     });
   }
 
-  app.listen(PORT, () => {
+  app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`PsycHeal Full-Stack Server running on port ${PORT}`);
   });
 };
